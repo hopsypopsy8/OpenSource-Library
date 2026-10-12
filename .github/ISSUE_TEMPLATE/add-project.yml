@@ -1,0 +1,44 @@
+name: Suggest a project
+description: Propose an open-source replica or reimplementation for the list
+labels: [suggestion]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Project name
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Official repository URL
+    validations:
+      required: true
+  - type: input
+    id: replicates
+    attributes:
+      label: What does it replicate?
+      placeholder: e.g. Netflix, Photoshop, Burnout 3
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Type
+      options:
+        - Reverse-engineered / clean-room reimplementation
+        - Decompilation or recompilation
+        - Functional open-source alternative
+    validations:
+      required: true
+  - type: input
+    id: licence
+    attributes:
+      label: Licence
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Evidence it's the official project
+      description: Link to the project website, press coverage, or author announcement.

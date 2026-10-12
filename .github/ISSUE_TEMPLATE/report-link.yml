@@ -1,0 +1,26 @@
+name: Report a suspicious or broken link
+description: Flag a link that is dead, impersonating a project, or distributing malware
+labels: [security, broken-link]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: Link
+    validations:
+      required: true
+  - type: dropdown
+    id: problem
+    attributes:
+      label: Problem
+      options:
+        - Broken / 404
+        - Impersonation or fake port
+        - Suspected malware
+        - Ships copyrighted assets
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
