@@ -1,11 +1,13 @@
 name: Check links
 
+# Runs weekly and on pull requests that touch the docs. It no longer runs on
+# every push to main, so routine edits don't trigger failure emails.
 on:
-  push:
-    branches: [main]
   pull_request:
+    paths: ["**.md"]
   schedule:
     - cron: "0 20 * * 0" # weekly, Monday 06:00 AEST
+  workflow_dispatch: # run manually from the Actions tab
 
 permissions:
   contents: read
@@ -16,14 +18,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Restore lychee cache
+        uses: actions/cache@v4
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
+
       - name: Check links
         id: lychee
         uses: lycheeverse/lychee-action@v2
+        env:
+          # Authenticated requests avoid GitHub rate-limiting the ~230 repo links.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: --no-progress --max-retries 3 --accept 200,206,429 README.md CONTRIBUTING.md
-          fail: ${{ github.event_name != 'schedule' }}
-      - name: Open issue on broken links (scheduled runs)
-        if: github.event_name == 'schedule' && steps.lychee.outputs.exit_code != 0
+          # 403/429 = sites blocking bots or rate limits, not dead links.
+          # Real failures (404, DNS errors, timeouts after retries) still fail.
+          args: >-
+            --no-progress
+            --cache --max-cache-age 3d
+            --max-retries 3 --retry-wait-time 5
+            --max-concurrency 8
+            --timeout 30
+            --accept 200..=299,403,429
+            README.md CONTRIBUTING.md
+          # Fail PRs so broken links in contributions are caught.
+          # Scheduled/manual runs open an issue instead of failing.
+          fail: ${{ github.event_name == 'pull_request' }}
+
+      - name: Open issue on broken links
+        if: github.event_name != 'pull_request' && steps.lychee.outputs.exit_code != 0
         uses: peter-evans/create-issue-from-file@v5
         with:
           title: Broken links found
